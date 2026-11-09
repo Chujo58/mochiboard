@@ -5,7 +5,8 @@
   const native = !!(window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.mb);
   // the Windows (and Linux) app: the same messages, answered by Rust through Tauri
   const tauri = !native && !!window.__TAURI_INTERNALS__;
-  const platform = native ? 'mac' : tauri ? (/Windows/i.test(navigator.userAgent) ? 'windows' : /Macintosh|Mac OS X/i.test(navigator.userAgent) ? 'mac' : 'linux') : 'web';
+  const platform = native ? (/Linux/i.test(navigator.userAgent) ? 'linux' : 'mac') : tauri ? (/Windows/i.test(navigator.userAgent) ? 'windows' : /Macintosh|Mac OS X/i.test(navigator.userAgent) ? 'mac' : 'linux') : 'web';
+  if (platform !== 'web') document.documentElement.classList.add(platform);
   const waiting = new Map(); let seq = 0;
   // Swift answers with window.__mbReply(id, ok, value)
   window.__mbReply = (id, ok, value) => { const w = waiting.get(id); if (!w) return; waiting.delete(id); ok ? w.res(value) : w.rej(new Error(value)); };
@@ -87,6 +88,7 @@
     native: true, platform,
     list: () => call('list'), load: id => call('load', { id }), save: board => call('save', { board }), remove: id => call('remove', { id }),
     folders: () => call('folders'), saveFolders: folders => call('saveFolders', { folders }),
+    prefs: prefs => call('prefs', prefs),
     usage: () => call('usage'), resetUsage: () => call('resetUsage'), version: () => call('version'),
     linkPreview: url => call('linkPreview', { url }), linkShot: url => call('linkShot', { url }), rewrite: (text, how, title, around) => call('rewrite', { text, how, title, around }), docPDF: (html, name, paper) => call('docPDF', { html, name, paper }), saveFile: (data, name, ext) => call('saveFile', { data, name, ext }), ask: (prompt, board, confirmed = false, opts = {}) => call('ask', { prompt, board, confirmed, ...opts }),
     saveMedia: (blob, onProgress) => saveMediaNative(blob, onProgress), mediaURL: async src => mediaAddr(src),
